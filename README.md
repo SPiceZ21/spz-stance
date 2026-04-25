@@ -17,7 +17,8 @@
 3. Ensure `spz-stance` in your `server.cfg`.
 
 # Usage
-- Use the command `/stancer` or press `F5` (default keybind).
+- Use `/stancer` or press `F5` to open the menu. (If no kit is installed, it will install one automatically).
+- Alternatively, use `/installstancer` to install the kit without opening the menu.
 
 # Dependencies
 - `oxmysql`

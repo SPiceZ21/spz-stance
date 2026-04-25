@@ -397,6 +397,17 @@ CreateThread(function()
 	return
 end)
 
+RegisterCommand('installstancer', function()
+	local vehicle = getveh()
+	if vehicle ~= 0 then
+		local plate = GetVehicleNumberPlateText(vehicle)
+		TriggerServerEvent('spz-stance:addstancer')
+		SPZ.Notify("Stancer Kit installed on ["..plate.."]", "success")
+	else
+		SPZ.Notify("No vehicle found nearby", "error")
+	end
+end)
+
 RegisterNUICallback('closecarcontrol', function(data, cb)
 	print("closing")
 	carcontrol = false
@@ -416,13 +427,24 @@ end
 
 function OpenStancer()
 	vehicle = getveh()
-	print(vehicle)
 	local ent = Entity(vehicle).state
-	if Config.Framework == 'Standalone' and not ent.stancer then
+	
+	if not ent.stancer then
 		TriggerServerEvent('spz-stance:addstancer')
-		while not ent.stancer do Wait(200) end
+		SPZ.Notify("Installing Stancer Kit...", "info")
+		
+		-- Wait for state bag to sync
+		local timer = 0
+		while not ent.stancer and timer < 10 do
+			Wait(100)
+			timer = timer + 1
+		end
 	end
-	if busy or not ent.stancer then SPZ.Notify("No Stancer Kit Install", "error") return end
+
+	if not ent.stancer then 
+		SPZ.Notify("Failed to install Stancer Kit", "error") 
+		return 
+	end
 	local cache = ent.stancer
 	isbusy = true
 	vehicle  = getveh()
