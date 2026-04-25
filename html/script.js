@@ -1,110 +1,116 @@
-const stancer = document.getElementById('container')
+const container = document.getElementById('container');
+const resourceName = 'spz-stance';
+
+function post(name, data) {
+    fetch(`https://${resourceName}/${name}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify(data || {})
+    }).catch(err => console.error('NUI Error:', err));
+}
+
 function playsound(table) {
-    var file = table['file']
-    var volume = table['volume']
-    var audioPlayer = null;
-    if (audioPlayer != null) {
-        audioPlayer.pause();
-    }
-    if (volume == undefined) {
-        volume = 0.1
-    }
-    audioPlayer = new Audio("./audio/" + file + ".ogg");
-    audioPlayer.volume = 0.3;
-    audioPlayer.play();
+    const file = table['file'];
+    const volume = table['volume'] || 0.3;
+    const audio = new Audio("./audio/" + file + ".ogg");
+    audio.volume = volume;
+    audio.play();
 }
 
 window.addEventListener('message', function(event) {
-    var data = event.data;
-    if (event.data.type == 'update') {
-        SetProgressCircle(event.data.val)
+    const data = event.data;
+    if (data.type === 'playsound') {
+        playsound(data.content);
     }
-    if (event.data.type == 'playsound') {
-        playsound(event.data.content)
-    }
-    if (event.data.type == 'show') {
-        if (event.data.content.bool) {
-            setShowCarcontrol(event.data.content)
-            stancer.style.display = 'block';
+    if (data.type === 'show') {
+        if (data.content.bool) {
+            setupSliders(data.content);
+            container.style.display = 'block';
         } else {
-            stancer.style.display = 'none';
+            container.style.display = 'none';
         }
     }
-
 });
 
-function setShowCarcontrol(table) {
-    if (table.bool) {
-        const settings = {
-        fill: '#1abc9c',
-        background: '#d7dcdf' };
-        const suspension = document.querySelectorAll('#heightd');
-        Array.prototype.forEach.call(suspension, slider => {
-            const val = table.height * 100
-            slider.querySelector('div').innerHTML = val.toFixed(1)
-            slider.querySelector('input').value = val.toFixed(1)
-            slider.querySelector('input').addEventListener('input', event => {
-                slider.querySelector('div').innerHTML = event.target.value
-                post("setvehicleheight",{val:event.target.value * 0.01})
-            });
-        });
+function setupSliders(data) {
+    // Height
+    const heightInput = document.getElementById('height');
+    const heightScore = document.getElementById('ratingOne');
+    const hVal = (data.height || 0) * 100;
+    heightInput.value = hVal;
+    heightScore.innerText = hVal.toFixed(2);
     
-        const wheeloffsetfront = document.querySelectorAll('#wheelofdiv');
-        Array.prototype.forEach.call(wheeloffsetfront, slider => {
-            const val = table.offset[1] * 10
-            slider.querySelector('input').value = val.toFixed(1)
-            slider.querySelector('div').innerHTML = val.toFixed(1)
-            slider.querySelector('input').addEventListener('input', event => {
-                slider.querySelector('div').innerHTML = event.target.value
-                post("setvehiclewheeloffsetfront",{val:event.target.value})
-            });
-        });
+    heightInput.oninput = (e) => {
+        const val = parseFloat(e.target.value);
+        heightScore.innerText = val.toFixed(2);
+        post("setvehicleheight", { val: val * 0.01 });
+    };
+
+    // Front Offset
+    const fOffInput = document.getElementById('wheelof');
+    const fOffScore = document.getElementById('ratingTwo');
+    const fOffVal = (data.offset[0] || 0) * 100; // Using index 0 for front if applicable
+    fOffInput.value = fOffVal;
+    fOffScore.innerText = fOffVal.toFixed(2);
     
-        const wheeloffsetrear = document.querySelectorAll('#wheelordiv');
-        Array.prototype.forEach.call(wheeloffsetrear, slider => {
-            const val = table.offset[1] * 10
-            slider.querySelector('input').value = val.toFixed(1)
-            slider.querySelector('div').innerHTML = val.toFixed(1)
-            slider.querySelector('input').addEventListener('input', event => {
-                slider.querySelector('div').innerHTML = event.target.value
-                post("setvehiclewheeloffsetrear",{val:event.target.value})
-            });
-        });
+    fOffInput.oninput = (e) => {
+        const val = parseFloat(e.target.value);
+        fOffScore.innerText = val.toFixed(2);
+        post("setvehiclewheeloffsetfront", { val: val });
+    };
+
+    // Rear Offset
+    const rOffInput = document.getElementById('wheelor');
+    const rOffScore = document.getElementById('ratingThree');
+    const rOffVal = (data.offset[2] || 0) * 100; // Using index 2 for rear
+    rOffInput.value = rOffVal;
+    rOffScore.innerText = rOffVal.toFixed(2);
     
-        const wheelrotationfront = document.querySelectorAll('#wheelrfdiv');
-        Array.prototype.forEach.call(wheelrotationfront, slider => {
-            const val = table.rotation[1] * 10
-            slider.querySelector('input').value = val.toFixed(1)
-            slider.querySelector('div').innerHTML = val.toFixed(1)
-            slider.querySelector('input').addEventListener('input', event => {
-                slider.querySelector('div').innerHTML = event.target.value
-                post("setvehiclewheelrotationfront",{val:event.target.value})
-            });
-        });
+    rOffInput.oninput = (e) => {
+        const val = parseFloat(e.target.value);
+        rOffScore.innerText = val.toFixed(2);
+        post("setvehiclewheeloffsetrear", { val: val });
+    };
+
+    // Front Rotation
+    const fRotInput = document.getElementById('wheelrf');
+    const fRotScore = document.getElementById('ratingFour');
+    const fRotVal = (data.rotation[0] || 0) * 100;
+    fRotInput.value = fRotVal;
+    fRotScore.innerText = fRotVal.toFixed(2);
     
-        const wheelrotationrear = document.querySelectorAll('#wheelrrdiv');
-        Array.prototype.forEach.call(wheelrotationrear, slider => {
-            const val = table.rotation[1] * 10
-            slider.querySelector('input').value = val.toFixed(1)
-            slider.querySelector('div').innerHTML = val.toFixed(1)
-            slider.querySelector('input').addEventListener('input', event => {
-                slider.querySelector('div').innerHTML = event.target.value
-                post("setvehiclewheelrotationrear",{val:event.target.value})
-            });
-        });
+    fRotInput.oninput = (e) => {
+        const val = parseFloat(e.target.value);
+        fRotScore.innerText = val.toFixed(2);
+        post("setvehiclewheelrotationfront", { val: val });
+    };
+
+    // Rear Rotation
+    const rRotInput = document.getElementById('wheelrr');
+    const rRotScore = document.getElementById('ratingFive');
+    const rRotVal = (data.rotation[2] || 0) * 100;
+    rRotInput.value = rRotVal;
+    rRotScore.innerText = rRotVal.toFixed(2);
+    
+    rRotInput.oninput = (e) => {
+        const val = parseFloat(e.target.value);
+        rRotScore.innerText = val.toFixed(2);
+        post("setvehiclewheelrotationrear", { val: val });
+    };
+}
+
+document.getElementById('close').addEventListener('click', function(e) {
+    e.preventDefault();
+    post("wheelsetting", { bool: true });
+    post('closecarcontrol', {});
+});
+
+// Close on Escape
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        post("wheelsetting", { bool: true });
+        post('closecarcontrol', {});
     }
-}
-
-function post(name,data){
-	var name = name;
-	var data = data;
-    var xhr = new XMLHttpRequest()
-    xhr.open("POST", "https://np-wheel/"+name, true)
-    xhr.setRequestHeader('Content-Type', 'application/json')
-    xhr.send(JSON.stringify(data))
-}
-
-document.getElementById('close').addEventListener('click', function() {
-        post("wheelsetting",{bool:true})
-        post('closecarcontrol',{})
-}, false)
+});
