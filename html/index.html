@@ -4,10 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SPZ · Stancer</title>
-<link rel="stylesheet" href="spz-ui.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  html, body { width: 100vw; height: 100vh; overflow: hidden; background: transparent; }
-  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+@font-face { font-family: 'Panchang'; src: url('fonts/Panchang-Variable.ttf') format('truetype'); font-weight: 100 900; }
+
+:root {
+  --spz-bg: #07080A; --spz-surface-1: #0E1014; --spz-surface-2: #14171C; --spz-surface-3: #1B1F26;
+  --spz-line: rgba(255,255,255,0.07); --spz-line-strong: rgba(255,255,255,0.13);
+  --spz-fg-1: #F0F2F5; --spz-fg-2: #A8AEBB; --spz-fg-3: #5C6370; --spz-fg-4: #3A3F4A;
+  --spz-orange: #FF6200; --spz-orange-deep: #D14E00;
+  --spz-font-display: 'Panchang', 'Inter', sans-serif;
+  --spz-font-body: 'Inter', system-ui, sans-serif;
+  --spz-font-mono: 'JetBrains Mono', monospace;
+  --spz-radius-3: 6px; --spz-radius-4: 8px; --spz-radius-pill: 9999px;
+  --spz-shadow-3: 0 8px 24px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4);
+  --spz-shadow-glow-soft: 0 0 12px rgba(255,98,0,0.25), 0 0 0 1px rgba(255,98,0,0.15);
+  --spz-dur-2: 140ms; --spz-ease-out: cubic-bezier(0,0,0.2,1);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background:transparent;font-family:var(--spz-font-body);font-size:13px;-webkit-font-smoothing:antialiased;}
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+.spz-eyebrow{font-family:var(--spz-font-mono);font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--spz-fg-3);}
+.spz-mono{font-family:var(--spz-font-mono);font-size:12px;font-variant-numeric:tabular-nums;}
+.spz-label{font-family:var(--spz-font-mono);font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--spz-fg-3);}
+.spz-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--spz-line);border-radius:var(--spz-radius-3);background:var(--spz-surface-2);color:var(--spz-fg-1);font-family:var(--spz-font-body);font-weight:500;font-size:13px;cursor:pointer;user-select:none;white-space:nowrap;transition:background var(--spz-dur-2) var(--spz-ease-out);}
+.spz-btn[data-variant="primary"]{background:var(--spz-orange);border-color:var(--spz-orange);color:#0A0A0A;font-weight:600;}
+.spz-btn[data-variant="primary"]:hover{background:#ff7a26;box-shadow:var(--spz-shadow-glow-soft);}
+.spz-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;font-family:var(--spz-font-mono);font-size:10px;font-weight:600;background:var(--spz-surface-3);border:1px solid var(--spz-line-strong);border-bottom-width:2px;border-radius:3px;color:var(--spz-fg-2);}
+.spz-slider{position:relative;height:18px;cursor:pointer;user-select:none;}
+.spz-slider-track{position:absolute;top:50%;left:0;right:0;height:4px;transform:translateY(-50%);background:var(--spz-surface-3);border-radius:var(--spz-radius-pill);overflow:hidden;}
+.spz-slider-fill{position:absolute;top:0;left:0;bottom:0;background:var(--spz-orange);}
+.spz-slider-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:var(--spz-fg-1);border:2px solid var(--spz-orange);border-radius:50%;}
 </style>
 </head>
 <body>
@@ -18,21 +47,59 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 
-<script type="text/babel" src="components.jsx"></script>
-
 <script type="text/babel">
 /** @jsx h */
 const { h, render } = preact;
-const { useState, useEffect, useCallback } = preactHooks;
+const { useState, useRef, useEffect, useCallback } = preactHooks;
 
 const resourceName = 'spz-stance';
 
 function post(name, data) {
-  fetch(`https://${resourceName}/${name}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-    body: JSON.stringify(data || {}),
-  }).catch(() => {});
+  fetch(`https://${resourceName}/${name}`, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=UTF-8' }, body: JSON.stringify(data || {}) }).catch(() => {});
+}
+
+function Icon({ name, size = 14, strokeWidth = 1.75, ...rest }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (window.lucide && ref.current) window.lucide.createIcons({ nameAttr: 'data-lucide', icons: window.lucide.icons, attrs: {} });
+  }, [name]);
+  return <i ref={ref} data-lucide={name} style={{ width: size, height: size, display: 'inline-flex', strokeWidth }} {...rest} />;
+}
+function Kbd({ children }) { return <span className="spz-kbd">{children}</span>; }
+function Button({ variant = 'default', icon, children, ...rest }) {
+  return (
+    <button className="spz-btn" data-variant={variant} {...rest}>
+      {icon && <Icon name={icon} size={14} />}{children}
+    </button>
+  );
+}
+function Slider({ value, onChange, min = 0, max = 100, step = 1 }) {
+  const [_v, _set] = useState(value ?? min);
+  const v = value !== undefined ? value : _v;
+  const trackRef = useRef(null);
+  const setFromEvent = (e) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    let next = min + ratio * (max - min);
+    next = Math.round(next / step) * step;
+    next = Math.max(min, Math.min(max, next));
+    if (value === undefined) _set(next);
+    onChange?.(next);
+  };
+  const onDown = (e) => {
+    setFromEvent(e);
+    const move = (ev) => setFromEvent(ev);
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+  const pct = ((v - min) / (max - min)) * 100;
+  return (
+    <div className="spz-slider" ref={trackRef} onMouseDown={onDown}>
+      <div className="spz-slider-track"><div className="spz-slider-fill" style={{ width: `${pct}%` }} /></div>
+      <div className="spz-slider-thumb" style={{ left: `${pct}%` }} />
+    </div>
+  );
 }
 
 const PARAMS = [
@@ -49,7 +116,7 @@ function SliderRow({ param, value, onChange }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ color: 'var(--spz-orange)', display: 'flex' }}><Icon name={param.icon} size={14} /></span>
-          <label className="spz-label" style={{ textTransform: 'none', fontSize: 12, letterSpacing: 0, color: 'var(--spz-fg-2)' }}>{param.label}</label>
+          <span className="spz-label" style={{ textTransform: 'none', fontSize: 12, letterSpacing: 0, color: 'var(--spz-fg-2)' }}>{param.label}</span>
         </div>
         <span className="spz-mono" style={{ color: 'var(--spz-orange)', fontSize: 12 }}>{value.toFixed(2)}</span>
       </div>
@@ -73,17 +140,9 @@ function App() {
       if (data.type === 'show') {
         if (data.content.bool) {
           const c = data.content;
-          setValues({
-            height:  (c.height        || 0) * 100,
-            wheelof: (c.offset?.[0]   || 0) * 100,
-            wheelor: (c.offset?.[2]   || 0) * 100,
-            wheelrf: (c.rotation?.[0] || 0) * 100,
-            wheelrr: (c.rotation?.[2] || 0) * 100,
-          });
+          setValues({ height: (c.height || 0) * 100, wheelof: (c.offset?.[0] || 0) * 100, wheelor: (c.offset?.[2] || 0) * 100, wheelrf: (c.rotation?.[0] || 0) * 100, wheelrr: (c.rotation?.[2] || 0) * 100 });
           setVisible(true);
-        } else {
-          setVisible(false);
-        }
+        } else setVisible(false);
       }
     };
     window.addEventListener('message', handler);
@@ -98,11 +157,7 @@ function App() {
 
   useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
 
-  const doClose = () => {
-    post('wheelsetting', { bool: true });
-    post('closecarcontrol', {});
-    setVisible(false);
-  };
+  const doClose = () => { post('wheelsetting', { bool: true }); post('closecarcontrol', {}); setVisible(false); };
 
   const handleChange = useCallback((param, val) => {
     setValues(prev => ({ ...prev, [param.id]: val }));
@@ -113,10 +168,7 @@ function App() {
 
   return (
     <div className="overlay">
-      <div style={{
-        width: 340, border: '1px solid var(--spz-line)', borderRadius: 'var(--spz-radius-4)',
-        background: 'var(--spz-surface-1)', boxShadow: 'var(--spz-shadow-3)', overflow: 'hidden',
-      }}>
+      <div style={{ width: 340, border: '1px solid var(--spz-line)', borderRadius: 8, background: 'var(--spz-surface-1)', boxShadow: 'var(--spz-shadow-3)', overflow: 'hidden' }}>
         <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid var(--spz-line)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ color: 'var(--spz-orange)', display: 'flex' }}><Icon name="sliders-horizontal" size={18} /></span>
           <div>
@@ -125,16 +177,13 @@ function App() {
           </div>
         </div>
 
-        <div style={{ padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {PARAMS.map(p => (
-            <SliderRow key={p.id} param={p} value={values[p.id]} onChange={val => handleChange(p, val)} />
-          ))}
+        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {PARAMS.map(p => <SliderRow key={p.id} param={p} value={values[p.id]} onChange={val => handleChange(p, val)} />)}
         </div>
 
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--spz-line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Kbd>Esc</Kbd>
-            <span style={{ fontSize: 11, color: 'var(--spz-fg-3)' }}>cancel</span>
+            <Kbd>Esc</Kbd><span style={{ fontSize: 11, color: 'var(--spz-fg-3)' }}>cancel</span>
           </div>
           <Button variant="primary" icon="check" onClick={doClose}>Save Changes</Button>
         </div>

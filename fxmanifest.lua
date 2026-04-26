@@ -16,7 +16,6 @@ client_scripts {
 
 files {
 	'html/index.html',
-	'html/script.js',
-	'html/style.css',
+	'html/fonts/*.ttf',
 	'html/audio/*.ogg'
 }
