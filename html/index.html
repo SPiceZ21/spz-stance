@@ -1,69 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
-    <title>SPZ Stancer</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPZ · Stancer</title>
+<link rel="stylesheet" href="../../spz-ui/components/styles/spz-ui.css">
+<style>
+  html, body { width: 100vw; height: 100vh; overflow: hidden; background: transparent; }
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+</style>
 </head>
 <body>
-    <div id="container" style="display:none;">
-        <div class="watermark">STANCER</div>
-        
-        <form>
-            <div class="header">
-                <span class="brand">SPZ</span>
-                <h1>STANCER</h1>
-            </div>
-            
-            <div class="scroll-area">
-                <div class="perf">
-                    <div class="label-row">
-                        <label for="height">HEIGHT</label>
-                        <div class="score" id="ratingOne">0.00</div>
-                    </div>
-                    <input type="range" id="height" name="height" step="0.01" min="0" max="20" value="0">
-                </div>
-        
-                <div class="perf">
-                    <div class="label-row">
-                        <label for="wheelof">FRONT OFFSET</label>
-                        <div class="score" id="ratingTwo">0.00</div>
-                    </div>
-                    <input type="range" id="wheelof" name="wheelof" step="0.1" min="0" max="10" value="0">
-                </div>
-        
-                <div class="perf">
-                    <div class="label-row">
-                        <label for="wheelor">REAR OFFSET</label>
-                        <div class="score" id="ratingThree">0.00</div>
-                    </div>
-                    <input type="range" id="wheelor" name="wheelor" step="0.1" min="0" max="10" value="0">
-                </div>
+<div id="root"></div>
 
-                <div class="perf">
-                    <div class="label-row">
-                        <label for="wheelrf">FRONT ROTATION</label>
-                        <div class="score" id="ratingFour">0.00</div>
-                    </div>
-                    <input type="range" id="wheelrf" name="wheelrf" step="0.1" min="0" max="10" value="0">
-                </div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 
-                <div class="perf">
-                    <div class="label-row">
-                        <label for="wheelrr">REAR ROTATION</label>
-                        <div class="score" id="ratingFive">0.00</div>
-                    </div>
-                    <input type="range" id="wheelrr" name="wheelrr" step="0.1" min="0" max="10" value="0">
-                </div>
-            </div>
+<script type="text/babel" src="../../spz-ui/components/Icon.jsx"></script>
+<script type="text/babel" src="../../spz-ui/components/Button.jsx"></script>
+<script type="text/babel" src="../../spz-ui/components/Slider.jsx"></script>
+<script type="text/babel" src="../../spz-ui/components/Kbd.jsx"></script>
 
-            <div class="footer">
-                <button id="close" type="submit">SAVE CHANGES</button>
-            </div>
-        </form>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const resourceName = 'spz-stance';
+
+function post(name, data) {
+  fetch(`https://${resourceName}/${name}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify(data || {}),
+  }).catch(() => {});
+}
+
+const PARAMS = [
+  { id: 'height',  icon: 'move-vertical',                  label: 'Height',         min: 0, max: 20,  step: 0.01, event: 'setvehicleheight',            transform: v => v * 0.01 },
+  { id: 'wheelof', icon: 'align-horizontal-justify-start',  label: 'Front Offset',   min: 0, max: 10,  step: 0.1,  event: 'setvehiclewheeloffsetfront',   transform: v => v },
+  { id: 'wheelor', icon: 'align-horizontal-justify-end',    label: 'Rear Offset',    min: 0, max: 10,  step: 0.1,  event: 'setvehiclewheeloffsetrear',    transform: v => v },
+  { id: 'wheelrf', icon: 'rotate-cw',                       label: 'Front Rotation', min: 0, max: 10,  step: 0.1,  event: 'setvehiclewheelrotationfront', transform: v => v },
+  { id: 'wheelrr', icon: 'rotate-ccw',                      label: 'Rear Rotation',  min: 0, max: 10,  step: 0.1,  event: 'setvehiclewheelrotationrear',  transform: v => v },
+];
+
+function SliderRow({ param, value, onChange }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: 'var(--spz-orange)', display: 'flex' }}><Icon name={param.icon} size={14} /></span>
+          <label className="spz-label" style={{ textTransform: 'none', fontSize: 12, letterSpacing: 0, color: 'var(--spz-fg-2)' }}>{param.label}</label>
+        </div>
+        <span className="spz-mono" style={{ color: 'var(--spz-orange)', fontSize: 12 }}>{value.toFixed(2)}</span>
+      </div>
+      <Slider value={value} onChange={onChange} min={param.min} max={param.max} step={param.step} />
     </div>
-    <script src='script.js'></script>
+  );
+}
+
+function App() {
+  const [visible, setVisible] = useState(false);
+  const [values, setValues] = useState({ height: 0, wheelof: 0, wheelor: 0, wheelrf: 0, wheelrr: 0 });
+
+  useEffect(() => {
+    const handler = (e) => {
+      const data = e.data;
+      if (data.type === 'playsound') {
+        const audio = new Audio('./audio/' + data.content.file + '.ogg');
+        audio.volume = data.content.volume || 0.3;
+        audio.play().catch(() => {});
+      }
+      if (data.type === 'show') {
+        if (data.content.bool) {
+          const c = data.content;
+          setValues({
+            height:  (c.height        || 0) * 100,
+            wheelof: (c.offset?.[0]   || 0) * 100,
+            wheelor: (c.offset?.[2]   || 0) * 100,
+            wheelrf: (c.rotation?.[0] || 0) * 100,
+            wheelrr: (c.rotation?.[2] || 0) * 100,
+          });
+          setVisible(true);
+        } else {
+          setVisible(false);
+        }
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape' && visible) doClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [visible]);
+
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+  const doClose = () => {
+    post('wheelsetting', { bool: true });
+    post('closecarcontrol', {});
+    setVisible(false);
+  };
+
+  const handleChange = useCallback((param, val) => {
+    setValues(prev => ({ ...prev, [param.id]: val }));
+    post(param.event, { val: param.transform(val) });
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div className="overlay">
+      <div style={{
+        width: 340, border: '1px solid var(--spz-line)', borderRadius: 'var(--spz-radius-4)',
+        background: 'var(--spz-surface-1)', boxShadow: 'var(--spz-shadow-3)', overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid var(--spz-line)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: 'var(--spz-orange)', display: 'flex' }}><Icon name="sliders-horizontal" size={18} /></span>
+          <div>
+            <div className="spz-eyebrow">Vehicle</div>
+            <div style={{ fontFamily: 'var(--spz-font-display)', fontWeight: 600, fontSize: 16, color: 'var(--spz-fg-1)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Stancer</div>
+          </div>
+        </div>
+
+        {/* Sliders */}
+        <div style={{ padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {PARAMS.map(p => (
+            <SliderRow key={p.id} param={p} value={values[p.id]} onChange={val => handleChange(p, val)} />
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--spz-line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Kbd>Esc</Kbd>
+            <span style={{ fontSize: 11, color: 'var(--spz-fg-3)' }}>cancel</span>
+          </div>
+          <Button variant="primary" icon="check" onClick={doClose}>Save Changes</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
