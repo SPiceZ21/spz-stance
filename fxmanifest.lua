@@ -1,6 +1,7 @@
 fx_version 'cerulean'
 game 'gta5'
-ui_page 'html/index.html'
+version '1.0.8'
+ui_page 'html/dist/index.html'
 lua54 'on'
 
 shared_scripts {
@@ -15,7 +16,6 @@ client_scripts {
 }
 
 files {
-	'html/index.html',
-	'html/fonts/*.ttf',
+	'html/dist/**/*',
 	'html/audio/*.ogg'
 }
