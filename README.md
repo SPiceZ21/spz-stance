@@ -1,69 +1,32 @@
-# SPiceZ Stancer
-- FiveM Stancer - Vehicle Adjustable Wheel Offsets, Rotation and Suspension Height
+# spz-stance
+> Vehicle suspension/stance editor · `v1.0.8`
 
-# Features
-- Standalone Operation (No QBCORE/ESX required)
-- Integrated with SPiceZ Core
-- Adjustable Wheel Offsets and Rotation
-- Adjustable Vehicle Suspension Height
-- Fully Server Sync (State Bags)
-- Optimized Performance
-- Persistent Data (Database storage by Plate)
-- Premium NUI Interface
+## Scripts
 
-# Installation
-1. Move `spz-stance` to your resource folder.
-2. Import `stancer.sql` to your database.
-3. Ensure `spz-stance` in your `server.cfg`.
+| Side   | File              | Purpose                                                  |
+| ------ | ----------------- | -------------------------------------------------------- |
+| Shared | `config.lua`      | Stance limits, allowed vehicles, configuration           |
+| Client | `client/main.lua` | Suspension/wheel offset editing, NUI bridge, persistence |
+| Server | `server/main.lua` | Save and restore stance data, client state sync          |
 
-# Usage
-- Use `/stancer` or press `F5` to open the menu. (If no kit is installed, it will install one automatically).
-- Alternatively, use `/installstancer` to install the kit without opening the menu.
+## NUI
 
-# Dependencies
-- `oxmysql`
-- `spz-lib` (for notifications)
+**Stack:** Vite · Preact · TypeScript · spz-ui
 
-# Exports for advanced usage
+> Note: this resource uses `html/` instead of the standard `ui/` folder.
 
-- Server Exports
-
-- Add Stancer Kit to Current Vehicle
 ```
-	exports['spz-stance']:AddStancerKit()
+html/
+├── src/
+│   ├── app.tsx
+│   ├── components/       # spz-ui components
+│   └── styles/
+├── audio/                # UI feedback sounds (*.ogg)
+└── dist/                 # built output (served by FiveM)
+    └── index.html
 ```
 
-- Client Exports 
-(to use this, AddStancerKit() exports must be used first 
-or the vehicle must have a installed stancer kit)
+Build: `cd html && npm run build`
 
-- Set Wheel Offset Front
-```
-	exports['spz-stance']:SetWheelOffsetFront(vehicle,value)
-```
-- Set Wheel Offset Rear
-```
-	exports['spz-stance']:SetWheelOffsetRear(vehicle,value)
-```
-- Set Wheel Rotation Front
-```
-	exports['spz-stance']:SetWheelRotationFront(vehicle,value)
-```
-- Set Wheel Rotation Rear
-```
-	exports['spz-stance']:SetWheelRotationRear(vehicle,value)
-```
-- Open Stancer Menu
-```
-	exports['spz-stance']:OpenStancer()
-```
-# FAQ
-- is the stance or wheel setting is saved even if i restart the server?
-```
-	yes data is save to database and attached to vehicle plate as a unique identifier
-```
-
-- when the data is being saved to Database?
-```
-When you delete the vehicle or store in garage
-```
+## CI
+Built and released via `.github/workflows/release.yml` on push to `main`.
