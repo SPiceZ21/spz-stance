@@ -1,4 +1,4 @@
-fx_version 'cerulean'
+﻿fx_version 'cerulean'
 game 'gta5'
 version '1.0.8'
 ui_page 'html/dist/index.html'
